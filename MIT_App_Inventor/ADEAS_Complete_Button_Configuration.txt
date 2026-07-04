@@ -1,0 +1,241 @@
+MIT APP INVENTOR - COMPLETE BUTTON CONFIGURATION FOR ADEAS RC CAR
+═══════════════════════════════════════════════════════════════════════════════
+
+DESIGNER COMPONENTS REQUIRED:
+────────────────────────────────────────────────────────────────────────────
+
+Connectivity:
+  • BluetoothClient1
+
+User Interface:
+  • Screen1
+  • ListPicker_BT
+  • Button_F (Forward)
+  • Button_B (Backward)
+  • Button_L (Left)
+  • Button_R (Right)
+  • Button_S (Stop)
+  • Button_RESET
+  • Button_LED_ON
+  • Button_LED_OFF
+  • Button_BUZZER_ON
+  • Button_BUZZER_OFF
+  • Label_Status
+  • Label_Title
+
+Notifications:
+  • Notifier1
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 1: CONNECT BLUETOOTH
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: ListPicker_BT
+Text: "Select HC-05"
+Properties: Blue background, White text
+
+Blocks:
+When Screen1.Initialize
+  Call ListPicker_BT.Open
+
+When ListPicker_BT.AfterPicking
+  Set BluetoothClient1.Address to ListPicker_BT.Selection
+  Call BluetoothClient1.Connect
+
+When BluetoothClient1.Connected
+  Set Label_Status.Text to "Connected to Car"
+  Set Label_Status.BackgroundColor to Green
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 2: FORWARD ↑
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_F
+Text: "FORWARD ↑"
+Properties: Blue background, White text, Bold
+
+Blocks:
+When Button_F.TouchDown
+  Call BluetoothClient1.SendText text "F"
+  Set Label_Status.Text to "Moving: FORWARD"
+
+When Button_F.TouchUp
+  Call BluetoothClient1.SendText text "S"
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 3: BACKWARD ↓
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_B
+Text: "BACKWARD ↓"
+Properties: Blue background, White text, Bold
+
+Blocks:
+When Button_B.TouchDown
+  Call BluetoothClient1.SendText text "B"
+  Set Label_Status.Text to "Moving: BACKWARD"
+
+When Button_B.TouchUp
+  Call BluetoothClient1.SendText text "S"
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 4: LEFT ←
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_L
+Text: "LEFT ←"
+Properties: Orange background, White text, Bold
+
+Blocks:
+When Button_L.TouchDown
+  Call BluetoothClient1.SendText text "L"
+  Set Label_Status.Text to "Turning: LEFT"
+
+When Button_L.TouchUp
+  Call BluetoothClient1.SendText text "S"
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 5: RIGHT →
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_R
+Text: "RIGHT →"
+Properties: Orange background, White text, Bold
+
+Blocks:
+When Button_R.TouchDown
+  Call BluetoothClient1.SendText text "R"
+  Set Label_Status.Text to "Turning: RIGHT"
+
+When Button_R.TouchUp
+  Call BluetoothClient1.SendText text "S"
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 6: STOP ■
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_S
+Text: "STOP ■"
+Properties: Red background, White text, Large, Bold
+
+Blocks:
+When Button_S.Click
+  Call BluetoothClient1.SendText text "S"
+  Set Label_Status.Text to "EMERGENCY STOP"
+  Set Label_Status.BackgroundColor to Red
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 7: RESET SYSTEM
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_RESET
+Text: "RESET SYSTEM"
+Properties: Dark Orange background, White text, Bold
+
+Blocks:
+When Button_RESET.Click
+  Call BluetoothClient1.SendText text "r"
+  Set Label_Status.Text to "System Reset Done"
+  Set Label_Status.BackgroundColor to Green
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 8: LED ON 💡
+═════════════════════════════════════════════════════════════════════════��═════
+
+Component: Button_LED_ON
+Text: "LED ON 💡"
+Properties: Yellow background, Black text
+
+Blocks:
+When Button_LED_ON.Click
+  Call BluetoothClient1.SendText text "W"
+  Set Label_Status.Text to "LED: ON"
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 9: LED OFF 💡
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_LED_OFF
+Text: "LED OFF 💡"
+Properties: Gray background, White text
+
+Blocks:
+When Button_LED_OFF.Click
+  Call BluetoothClient1.SendText text "w"
+  Set Label_Status.Text to "LED: OFF"
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 10: BUZZER ON 🔊
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_BUZZER_ON
+Text: "BUZZER ON 🔊"
+Properties: Magenta background, White text
+
+Blocks:
+When Button_BUZZER_ON.Click
+  Call BluetoothClient1.SendText text "V"
+  Set Label_Status.Text to "BUZZER: ON"
+
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON 11: BUZZER OFF 🔇
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: Button_BUZZER_OFF
+Text: "BUZZER OFF 🔇"
+Properties: Dark Gray background, White text
+
+Blocks:
+When Button_BUZZER_OFF.Click
+  Call BluetoothClient1.SendText text "v"
+  Set Label_Status.Text to "BUZZER: OFF"
+
+═══════════════════════════════════════════════════════════════════════════════
+BLOCK 12: RECEIVE DATA FROM ARDUINO
+═══════════════════════════════════════════════════════════════════════════════
+
+Component: BluetoothClient1
+
+Blocks:
+When BluetoothClient1.ReceiveText numberOfBytes -1
+  set message to call BluetoothClient1.ReceiveText numberOfBytes -1
+  
+  If message = "ACCIDENT_DETECTED"
+    Then
+      Set Label_Status.Text to "ACCIDENT! CAR STOPPED"
+      Set Label_Status.BackgroundColor to Red
+      Call Notifier1.ShowAlert title "ACCIDENT DETECTED" 
+                                message "Press RESET to recover"
+  
+  Else If message = "SYSTEM_RESET_ACK"
+    Then
+      Set Label_Status.Text to "System Ready"
+      Set Label_Status.BackgroundColor to Green
+
+═══════════════════════════════════════════════════════════════════════════════
+COMMAND REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+F = Forward (TouchDown sends F, TouchUp sends S)
+B = Backward (TouchDown sends B, TouchUp sends S)
+L = Left (TouchDown sends L, TouchUp sends S)
+R = Right (TouchDown sends R, TouchUp sends S)
+S = Stop
+r = Reset System
+W = LED ON
+w = LED OFF
+V = Buzzer ON
+v = Buzzer OFF
+
+═══════════════════════════════════════════════════════════════════════════════
+MESSAGES FROM ARDUINO
+═══════════════════════════════════════════════════════════════════════════════
+
+ACCIDENT_DETECTED - Collision detected, car stopped
+SYSTEM_RESET_ACK - System reset successful
+EMERGENCY_AUTO_ALERT - 20 second timeout reached
+ADEAS_READY - Arduino online and ready
+LED_ON - LED confirmed on
+LED_OFF - LED confirmed off
+BUZZER_ON - Buzzer confirmed on
+BUZZER_OFF - Buzzer confirmed off

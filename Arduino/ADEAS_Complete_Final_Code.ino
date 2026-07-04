@@ -17,7 +17,7 @@
  * AUTHOR: sreeragthamburu2011-crypto
  * DATE: 2026
  * LICENSE: Open Source
- * ═══════════════════════���═══════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
 #include <SoftwareSerial.h>
@@ -49,7 +49,7 @@ SoftwareSerial BT(BT_RX, BT_TX);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SYSTEM CONSTANTS & CONFIGURATION
-// ═══════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════��══════════════════════════════════════════
 
 // Accident Detection Thresholds
 const int VIBRATION_THRESHOLD = HIGH;      // Vibration sensor trigger level
@@ -154,7 +154,6 @@ void setup() {
     Serial.println("[ERROR] ✗ MPU6050 connection FAILED!");
     Serial.println("[ERROR] Check I2C connections (SDA=A4, SCL=A5)");
     performErrorBlink();
-    // Continue anyway - system can work with vibration sensor only
   } else {
     Serial.println("[INIT] ✓ MPU6050 connection successful");
     
@@ -192,38 +191,29 @@ void setup() {
   Serial.println("Commands:");
   Serial.println("  F = Forward    B = Backward   L = Left      R = Right");
   Serial.println("  S = Stop       r = Reset      W = LED ON    w = LED OFF");
+  Serial.println("  V = Buzzer ON  v = Buzzer OFF");
   Serial.println();
   
   // Send ready signal to app
   BT.println("ADEAS_READY");
 }
 
-// ═════════════════════════════════════════════════════════════════════════���═
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN LOOP - Runs continuously
 // ═══════════════════════════════════════════════════════════════════════════
 
 void loop() {
-  // ─────────────────────────────────────────────────────────────────────────
-  // CONTINUOUS OPERATIONS
-  // ─────────────────────────────────────────────────────────────────────────
-  
   // Check for accidents continuously
   checkForAccident();
   
   // Handle LED status updates
   updateLEDStatus();
   
-  // ─────────────────────────────────────────────────────────────────────────
   // SYSTEM LOCKED STATE (After Accident)
-  // ─────────────────────────────────────────────────────────────────────────
-  
   if (isSystemLocked) {
-    // System is locked - only respond to reset command
     if (BT.available()) {
       char cmd = BT.read();
-      
       if (cmd == 'r') {
-        // Reset command received
         systemReset();
       }
     }
@@ -231,31 +221,23 @@ void loop() {
     // Check if emergency alert timeout has passed
     if (!emergencyAlertSent) {
       unsigned long timeSinceAccident = millis() - accidentTimestamp;
-      
       if (timeSinceAccident >= EMERGENCY_ALERT_DELAY) {
-        // 20 seconds have passed - send auto emergency alert
         sendAutoEmergencyAlert();
       }
     }
-    
-    return;  // Don't process movement commands while locked
+    return;
   }
   
-  // ─────────────────────────────────────────────────────────────────────────
   // NORMAL OPERATION - Process Bluetooth Commands
-  // ─────────────────────────────────────────────────────────────────────────
-  
   if (BT.available()) {
     char cmd = BT.read();
     
-    // Echo command for debugging
     Serial.print("[BT] Command: ");
     Serial.println(cmd);
     
     lastSerialData = millis();
     
-    // ────────── MOVEMENT COMMANDS ──────────
-    
+    // MOVEMENT COMMANDS
     if (cmd == 'F') {
       forward();
       currentMovement = 'F';
@@ -281,9 +263,7 @@ void loop() {
       currentMovement = 'S';
       digitalWrite(STATUS_LED, LOW);
     }
-    
-    // ────────── LED CONTROL COMMANDS ──────────
-    
+    // LED CONTROL COMMANDS
     else if (cmd == 'W') {
       digitalWrite(STATUS_LED, HIGH);
       Serial.println("[LED] Status LED ON");
@@ -294,16 +274,21 @@ void loop() {
       Serial.println("[LED] Status LED OFF");
       BT.println("LED_OFF");
     }
-    
-    // ────────── SYSTEM CONTROL COMMANDS ──────────
-    
+    // BUZZER CONTROL COMMANDS
+    else if (cmd == 'V') {
+      tone(BUZZER_PIN, ALARM_FREQUENCY_HIGH);
+      Serial.println("[BUZZER] Buzzer ON");
+      BT.println("BUZZER_ON");
+    }
+    else if (cmd == 'v') {
+      noTone(BUZZER_PIN);
+      Serial.println("[BUZZER] Buzzer OFF");
+      BT.println("BUZZER_OFF");
+    }
+    // SYSTEM CONTROL COMMANDS
     else if (cmd == 'r') {
-      // Reset command (shouldn't get here if locked, but just in case)
       systemReset();
     }
-    
-    // ────────── UNKNOWN COMMAND ──────────
-    
     else {
       Serial.print("[BT] Unknown command: ");
       Serial.println(cmd);
@@ -315,10 +300,6 @@ void loop() {
 // MOTOR CONTROL FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
-/*
- * forward() - Move car forward
- * Both left and right motors spin forward
- */
 void forward() {
   digitalWrite(MOTOR_LEFT_FORWARD, HIGH);
   digitalWrite(MOTOR_LEFT_BACKWARD, LOW);
@@ -327,10 +308,6 @@ void forward() {
   Serial.println("[MOTOR] Direction: FORWARD ▲");
 }
 
-/*
- * backward() - Move car backward
- * Both left and right motors spin backward
- */
 void backward() {
   digitalWrite(MOTOR_LEFT_FORWARD, LOW);
   digitalWrite(MOTOR_LEFT_BACKWARD, HIGH);
@@ -339,10 +316,6 @@ void backward() {
   Serial.println("[MOTOR] Direction: BACKWARD ▼");
 }
 
-/*
- * left() - Turn car left
- * Left motors backward, right motors forward (pivot left)
- */
 void left() {
   digitalWrite(MOTOR_LEFT_FORWARD, LOW);
   digitalWrite(MOTOR_LEFT_BACKWARD, HIGH);
@@ -351,10 +324,6 @@ void left() {
   Serial.println("[MOTOR] Direction: LEFT ◄");
 }
 
-/*
- * right() - Turn car right
- * Left motors forward, right motors backward (pivot right)
- */
 void right() {
   digitalWrite(MOTOR_LEFT_FORWARD, HIGH);
   digitalWrite(MOTOR_LEFT_BACKWARD, LOW);
@@ -363,10 +332,6 @@ void right() {
   Serial.println("[MOTOR] Direction: RIGHT ►");
 }
 
-/*
- * stopMotors() - Stop all motors immediately
- * All motor pins set to LOW
- */
 void stopMotors() {
   digitalWrite(MOTOR_LEFT_FORWARD, LOW);
   digitalWrite(MOTOR_LEFT_BACKWARD, LOW);
@@ -379,12 +344,8 @@ void stopMotors() {
 // ACCIDENT DETECTION SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
-/*
- * checkForAccident() - Continuous accident detection
- * Checks both vibration sensor and MPU6050 accelerometer/gyroscope
- */
 void checkForAccident() {
-  // Check Vibration Sensor (Immediate collision detection)
+  // Check Vibration Sensor
   if (digitalRead(VIBRATION_SENSOR) == HIGH) {
     Serial.println("[SENSOR] Vibration detected!");
     triggerAccident("VIBRATION");
@@ -396,7 +357,7 @@ void checkForAccident() {
   mpu.getRotation(&gyroX, &gyroY, &gyroZ);
   mpu.getTemperature(&tempRaw);
   
-  // Check for sudden acceleration (impact detection)
+  // Check for sudden acceleration
   long accelMagnitude = (long)accelX * accelX + (long)accelY * accelY + (long)accelZ * accelZ;
   
   if (accelMagnitude > (long)ACCEL_THRESHOLD * ACCEL_THRESHOLD) {
@@ -406,7 +367,7 @@ void checkForAccident() {
     return;
   }
   
-  // Check for sudden rotation (rollover detection)
+  // Check for sudden rotation
   long gyroMagnitude = (long)gyroX * gyroX + (long)gyroY * gyroY + (long)gyroZ * gyroZ;
   
   if (gyroMagnitude > (long)GYRO_THRESHOLD * GYRO_THRESHOLD) {
@@ -417,12 +378,7 @@ void checkForAccident() {
   }
 }
 
-/*
- * triggerAccident() - Handle accident event
- * Stops motors, activates alarm, locks system, sends alert
- */
 void triggerAccident(String reason) {
-  // Prevent multiple accident triggers
   if (accidentDetected) {
     return;
   }
@@ -440,19 +396,14 @@ void triggerAccident(String reason) {
   Serial.println(reason);
   Serial.println("[ACCIDENT] Emergency procedures initiated:");
   
-  // STEP 1: Stop all motors immediately
   Serial.println("[ACCIDENT]  1) Stopping all motors");
   stopMotors();
   
-  // STEP 2: Activate buzzer alarm pattern
   Serial.println("[ACCIDENT]  2) Activating buzzer alarm");
   activateAlarmPattern();
   
-  // STEP 3: Flash LED in emergency pattern
   Serial.println("[ACCIDENT]  3) Flashing emergency LED");
-  // LED will be flashed in updateLEDStatus() function
   
-  // STEP 4: Send emergency alert to app
   Serial.println("[ACCIDENT]  4) Sending emergency alert to app");
   BT.println("ACCIDENT_DETECTED");
   
@@ -462,12 +413,7 @@ void triggerAccident(String reason) {
   Serial.println();
 }
 
-/*
- * activateAlarmPattern() - Play buzzer alarm pattern
- * Pattern: 3 short beeps + 1 long beep
- */
 void activateAlarmPattern() {
-  // Alarm pattern: 3 short beeps
   for (int i = 0; i < 3; i++) {
     tone(BUZZER_PIN, ALARM_FREQUENCY_HIGH);
     delay(ALARM_DURATION);
@@ -475,7 +421,6 @@ void activateAlarmPattern() {
     delay(100);
   }
   
-  // Long beep
   tone(BUZZER_PIN, ALARM_FREQUENCY_LOW);
   delay(500);
   noTone(BUZZER_PIN);
@@ -485,13 +430,9 @@ void activateAlarmPattern() {
 // EMERGENCY ALERT SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
-/*
- * sendAutoEmergencyAlert() - Send emergency alert after timeout
- * Called 20 seconds after accident if not manually reset
- */
 void sendAutoEmergencyAlert() {
   if (emergencyAlertSent) {
-    return;  // Alert already sent
+    return;
   }
   
   emergencyAlertSent = true;
@@ -502,7 +443,6 @@ void sendAutoEmergencyAlert() {
   Serial.println("║     No reset received within 20 seconds of accident       ║");
   Serial.println("╚═══════════════════════════════════════════════════════════╝");
   
-  // Play extended alarm
   for (int i = 0; i < 5; i++) {
     tone(BUZZER_PIN, ALARM_FREQUENCY_HIGH);
     delay(200);
@@ -510,21 +450,15 @@ void sendAutoEmergencyAlert() {
     delay(100);
   }
   
-  // Send emergency alert to app
   BT.println("EMERGENCY_AUTO_ALERT");
   
   Serial.println("[ALERT] Emergency auto-alert message sent to app.");
-  Serial.println("[ALERT] App should now send GPS coordinates to emergency contact.");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SYSTEM CONTROL FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
-/*
- * systemReset() - Reset system after accident
- * Clears accident flags, re-enables motor control
- */
 void systemReset() {
   Serial.println();
   Serial.println("╔═══════════════════════════════════════════════════════════╗");
@@ -532,23 +466,16 @@ void systemReset() {
   Serial.println("║              System returning to normal mode             ║");
   Serial.println("╚═══════════════════════════════════════════════════════════╝");
   
-  // Clear all accident-related flags
   accidentDetected = false;
   isSystemLocked = false;
   emergencyAlertSent = false;
   blinkMode = false;
   currentMovement = 'S';
   
-  // Stop all motors
   stopMotors();
-  
-  // Turn off buzzer (if still sounding)
   noTone(BUZZER_PIN);
-  
-  // Turn off LED
   digitalWrite(STATUS_LED, LOW);
   
-  // Send acknowledgment to app
   BT.println("SYSTEM_RESET_ACK");
   
   Serial.println("[RESET] ✓ All systems reset");
@@ -562,31 +489,18 @@ void systemReset() {
 // LED STATUS INDICATOR FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
-/*
- * updateLEDStatus() - Update LED based on system state
- * Normal: Steady when moving, off when stopped
- * Emergency: Rapid blinking
- */
 void updateLEDStatus() {
   unsigned long currentTime = millis();
   
   if (blinkMode) {
-    // Emergency blinking pattern (fast)
     if (currentTime - lastLEDToggle >= 100) {
       ledState = !ledState;
       digitalWrite(STATUS_LED, ledState ? HIGH : LOW);
       lastLEDToggle = currentTime;
     }
-  } else {
-    // Normal operation (LED controlled by command)
-    // LED is set directly in command processing
   }
 }
 
-/*
- * performErrorBlink() - Blink LED to indicate error
- * Called during initialization if sensors fail
- */
 void performErrorBlink() {
   for (int i = 0; i < 10; i++) {
     digitalWrite(STATUS_LED, HIGH);
@@ -596,74 +510,4 @@ void performErrorBlink() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// DIAGNOSTIC & DEBUG FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════════
-
-/*
- * printSensorData() - Print current sensor readings to Serial
- * Useful for debugging and sensor calibration
- */
-void printSensorData() {
-  Serial.println("\n┌─ SENSOR DATA ─────────────────────────────────┐");
-  
-  // Accelerometer data
-  Serial.print("│ Acceleration (g): ");
-  Serial.print("X="); Serial.print(accelX / 16384.0, 2);
-  Serial.print(" Y="); Serial.print(accelY / 16384.0, 2);
-  Serial.print(" Z="); Serial.println(accelZ / 16384.0, 2);
-  
-  // Gyroscope data
-  Serial.print("│ Rotation (°/s):   ");
-  Serial.print("X="); Serial.print(gyroX / 131.0, 1);
-  Serial.print(" Y="); Serial.print(gyroY / 131.0, 1);
-  Serial.print(" Z="); Serial.println(gyroZ / 131.0, 1);
-  
-  // Temperature
-  Serial.print("│ Temperature (°C): ");
-  Serial.println((tempRaw / 340.0) + 36.53, 1);
-  
-  // Vibration sensor
-  Serial.print("│ Vibration Sensor: ");
-  Serial.println(digitalRead(VIBRATION_SENSOR) == HIGH ? "TRIGGERED" : "normal");
-  
-  Serial.println("└───────────────────────────────────────────────┘");
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // END OF CODE
-// ═══════════════════════════════════════════════════════════════════════════
-
-/*
- * COMPILATION NOTES:
- * 
- * Required Libraries:
- * 1. SoftwareSerial (built-in)
- * 2. Wire (built-in for I2C)
- * 3. MPU6050 (must install via Library Manager)
- *    - Search for "MPU6050" by Jeff Rowberg
- *    - Install version 0.10.7 or later
- * 
- * Board Configuration:
- * - Board: Arduino UNO
- * - Processor: ATmega328P
- * - Upload Speed: 115200
- * - Port: COM3 (or your Arduino port)
- * 
- * Memory Usage:
- * - Sketch uses approximately 70-75% of program storage space
- * - Global variables use approximately 40-45% of dynamic memory
- * - If memory issues occur, consider removing Serial debug statements
- * 
- * TESTING CHECKLIST:
- * ☐ Motors respond to BT commands (F, B, L, R, S)
- * ☐ LED responds to commands (W, w)
- * ☐ Reset function works (r)
- * ☐ Vibration sensor triggers accident (tap car gently)
- * ☐ MPU6050 detects acceleration (shake car)
- * ☐ Buzzer sounds on accident
- * ☐ System locks after accident
- * ☐ 20-second countdown works
- * ☐ App receives ACCIDENT_DETECTED message
- * ☐ System recovers after reset
- */
